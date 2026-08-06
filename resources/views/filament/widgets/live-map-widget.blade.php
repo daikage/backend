@@ -55,7 +55,7 @@
             }
             .map-container-wrapper {
                 width: 100%;
-                height: 500px;
+                height: 650px;
                 border-radius: 1rem;
                 overflow: hidden;
                 position: relative;
@@ -156,36 +156,113 @@
         <div class="map-container-wrapper" wire:ignore>
             
             @if($mapEngine === 'maplibre')
-                <div id="maplibre-container" style="width: 100%; height: 100%;"></div>
-                <link href="https://unpkg.com/maplibre-gl@3.3.0/dist/maplibre-gl.css" rel="stylesheet" />
-                <script src="https://unpkg.com/maplibre-gl@3.3.0/dist/maplibre-gl.js"></script>
-                <script>
-                    document.addEventListener('DOMContentLoaded', function() {
-                        var mapStyle = '{{ $maplibreApiKey ? "https://api.maptiler.com/maps/streets/style.json?key=".$maplibreApiKey : "https://demotiles.maplibre.org/style.json" }}';
-                        var map = new maplibregl.Map({
-                            container: 'maplibre-container',
-                            style: mapStyle,
-                            center: [3.3792, 6.5244], // Longitude, Latitude (Lagos)
-                            zoom: 12,
-                            attributionControl: false
-                        });
-                        
-                        // Example: Add a live driver marker
-                        var el = document.createElement('div');
-                        el.style.width = '30px';
-                        el.style.height = '30px';
-                        el.style.backgroundColor = '#556B2F';
-                        el.style.borderRadius = '50%';
-                        el.style.border = '3px solid white';
-                        el.style.boxShadow = '0 2px 4px rgba(0,0,0,0.3)';
-                        
-                        new maplibregl.Marker(el)
-                            .setLngLat([3.3792, 6.5244])
-                            .addTo(map);
-                    });
-                </script>
+                <div 
+                    x-data="{
+                        initMap() {
+                            var mapStyle = '{{ $maplibreApiKey ? "https://api.maptiler.com/maps/streets/style.json?key=".$maplibreApiKey : "https://demotiles.maplibre.org/style.json" }}';
+                            var map = new maplibregl.Map({
+                                container: this.$refs.mapContainer,
+                                style: mapStyle,
+                                center: [3.3792, 6.5244], // Longitude, Latitude (Lagos)
+                                zoom: 12,
+                                attributionControl: false
+                            });
+                            
+                            var el = document.createElement('div');
+                            el.style.width = '30px';
+                            el.style.height = '30px';
+                            el.style.backgroundColor = '#556B2F';
+                            el.style.borderRadius = '50%';
+                            el.style.border = '3px solid white';
+                            el.style.boxShadow = '0 2px 4px rgba(0,0,0,0.3)';
+                            
+                            new maplibregl.Marker(el)
+                                .setLngLat([3.3792, 6.5244])
+                                .addTo(map);
+                        }
+                    }"
+                    x-init="
+                        if (typeof maplibregl === 'undefined') {
+                            let script = document.createElement('script');
+                            script.src = 'https://unpkg.com/maplibre-gl@3.3.0/dist/maplibre-gl.js';
+                            script.onload = () => initMap();
+                            document.head.appendChild(script);
+                            
+                            let link = document.createElement('link');
+                            link.href = 'https://unpkg.com/maplibre-gl@3.3.0/dist/maplibre-gl.css';
+                            link.rel = 'stylesheet';
+                            document.head.appendChild(link);
+                        } else {
+                            initMap();
+                        }
+                    "
+                    style="width: 100%; height: 100%;"
+                >
+                    <div x-ref="mapContainer" style="width: 100%; height: 100%;"></div>
+                </div>
             @else
-                <div id="google-map-container" style="width: 100%; height: 100%; position: relative;">
+                <div 
+                    x-data="{
+                        initMap() {
+                            if (!this.$refs.mapContainer) return;
+                            const lagos = { lat: 6.5244, lng: 3.3792 };
+                            const map = new google.maps.Map(this.$refs.mapContainer, {
+                                zoom: 12,
+                                center: lagos,
+                                mapTypeControl: false,
+                                streetViewControl: false,
+                                fullscreenControl: false,
+                                styles: [
+                                    { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#e9e9e9' }, { lightness: 17 }] },
+                                    { featureType: 'landscape', elementType: 'geometry', stylers: [{ color: '#f5f5f5' }, { lightness: 20 }] },
+                                    { featureType: 'road.highway', elementType: 'geometry.fill', stylers: [{ color: '#ffffff' }, { lightness: 17 }] },
+                                    { featureType: 'road.highway', elementType: 'geometry.stroke', stylers: [{ color: '#ffffff' }, { lightness: 29 }, { weight: 0.2 }] },
+                                    { featureType: 'road.arterial', elementType: 'geometry', stylers: [{ color: '#ffffff' }, { lightness: 18 }] },
+                                    { featureType: 'road.local', elementType: 'geometry', stylers: [{ color: '#ffffff' }, { lightness: 16 }] },
+                                    { featureType: 'poi', elementType: 'geometry', stylers: [{ color: '#f5f5f5' }, { lightness: 21 }] },
+                                    { featureType: 'poi.park', elementType: 'geometry', stylers: [{ color: '#dedede' }, { lightness: 21 }] },
+                                    { elementType: 'labels.text.stroke', stylers: [{ visibility: 'on' }, { color: '#ffffff' }, { lightness: 16 }] },
+                                    { elementType: 'labels.text.fill', stylers: [{ saturation: 36 }, { color: '#333333' }, { lightness: 40 }] },
+                                    { elementType: 'labels.icon', stylers: [{ visibility: 'off' }] },
+                                    { featureType: 'transit', elementType: 'geometry', stylers: [{ color: '#f2f2f2' }, { lightness: 19 }] },
+                                    { featureType: 'administrative', elementType: 'geometry.fill', stylers: [{ color: '#fefefe' }, { lightness: 20 }] },
+                                    { featureType: 'administrative', elementType: 'geometry.stroke', stylers: [{ color: '#fefefe' }, { lightness: 17 }, { weight: 1.2 }] }
+                                ]
+                            });
+                            
+                            new google.maps.Marker({
+                                position: lagos,
+                                map: map,
+                                title: 'Active Driver',
+                                icon: {
+                                    path: google.maps.SymbolPath.CIRCLE,
+                                    scale: 10,
+                                    fillColor: '#556B2F',
+                                    fillOpacity: 1,
+                                    strokeColor: '#ffffff',
+                                    strokeWeight: 3,
+                                },
+                            });
+                        }
+                    }"
+                    x-init="
+                        @if($googleMapsApiKey)
+                            window.initGoogleMap = () => initMap();
+                            if (typeof google === 'undefined' || typeof google.maps === 'undefined') {
+                                let script = document.createElement('script');
+                                script.src = 'https://maps.googleapis.com/maps/api/js?key={{ $googleMapsApiKey }}&callback=initGoogleMap';
+                                script.async = true;
+                                script.defer = true;
+                                document.head.appendChild(script);
+                            } else {
+                                initMap();
+                            }
+                        @endif
+                    "
+                    style="width: 100%; height: 100%; position: relative;"
+                >
+                    <div x-ref="mapContainer" style="width: 100%; height: 100%;"></div>
+                    
                     @if(!$googleMapsApiKey)
                         <div class="missing-key-overlay">
                             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
@@ -195,53 +272,6 @@
                         </div>
                     @endif
                 </div>
-                
-                @if($googleMapsApiKey)
-                <script>
-                    function initGoogleMap() {
-                        const lagos = { lat: 6.5244, lng: 3.3792 };
-                        const map = new google.maps.Map(document.getElementById("google-map-container"), {
-                            zoom: 12,
-                            center: lagos,
-                            mapTypeControl: false,
-                            streetViewControl: false,
-                            fullscreenControl: false,
-                            styles: [
-                                { featureType: "water", elementType: "geometry", stylers: [{ color: "#e9e9e9" }, { lightness: 17 }] },
-                                { featureType: "landscape", elementType: "geometry", stylers: [{ color: "#f5f5f5" }, { lightness: 20 }] },
-                                { featureType: "road.highway", elementType: "geometry.fill", stylers: [{ color: "#ffffff" }, { lightness: 17 }] },
-                                { featureType: "road.highway", elementType: "geometry.stroke", stylers: [{ color: "#ffffff" }, { lightness: 29 }, { weight: 0.2 }] },
-                                { featureType: "road.arterial", elementType: "geometry", stylers: [{ color: "#ffffff" }, { lightness: 18 }] },
-                                { featureType: "road.local", elementType: "geometry", stylers: [{ color: "#ffffff" }, { lightness: 16 }] },
-                                { featureType: "poi", elementType: "geometry", stylers: [{ color: "#f5f5f5" }, { lightness: 21 }] },
-                                { featureType: "poi.park", elementType: "geometry", stylers: [{ color: "#dedede" }, { lightness: 21 }] },
-                                { elementType: "labels.text.stroke", stylers: [{ visibility: "on" }, { color: "#ffffff" }, { lightness: 16 }] },
-                                { elementType: "labels.text.fill", stylers: [{ saturation: 36 }, { color: "#333333" }, { lightness: 40 }] },
-                                { elementType: "labels.icon", stylers: [{ visibility: "off" }] },
-                                { featureType: "transit", elementType: "geometry", stylers: [{ color: "#f2f2f2" }, { lightness: 19 }] },
-                                { featureType: "administrative", elementType: "geometry.fill", stylers: [{ color: "#fefefe" }, { lightness: 20 }] },
-                                { featureType: "administrative", elementType: "geometry.stroke", stylers: [{ color: "#fefefe" }, { lightness: 17 }, { weight: 1.2 }] }
-                            ]
-                        });
-                        
-                        // Custom Marker
-                        new google.maps.Marker({
-                            position: lagos,
-                            map: map,
-                            title: "Active Driver",
-                            icon: {
-                                path: google.maps.SymbolPath.CIRCLE,
-                                scale: 10,
-                                fillColor: "#556B2F",
-                                fillOpacity: 1,
-                                strokeColor: "#ffffff",
-                                strokeWeight: 3,
-                            },
-                        });
-                    }
-                </script>
-                <script src="https://maps.googleapis.com/maps/api/js?key={{ $googleMapsApiKey }}&callback=initGoogleMap" async defer></script>
-                @endif
             @endif
             
             <div class="map-overlay-stats">
