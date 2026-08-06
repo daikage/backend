@@ -20,4 +20,9 @@ class Vehicle extends Model
     {
         return $this->belongsTo(User::class, 'user_id');
     }
+
+    public function rideCategory(): BelongsTo
+    {
+        return $this->belongsTo(RideCategory::class);
+    }
 }

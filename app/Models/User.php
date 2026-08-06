@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Panel;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -75,5 +76,25 @@ class User extends Authenticatable implements FilamentUser
     public function canAccessPanel(Panel $panel): bool
     {
         return $this->isAdmin();
+    }
+
+    public function wallet(): HasOne
+    {
+        return $this->hasOne(Wallet::class);
+    }
+
+    public function earnings(): HasMany
+    {
+        return $this->hasMany(Earning::class, 'driver_id');
+    }
+
+    public function givenRatings(): HasMany
+    {
+        return $this->hasMany(Rating::class, 'rater_id');
+    }
+
+    public function receivedRatings(): HasMany
+    {
+        return $this->hasMany(Rating::class, 'ratee_id');
     }
 }

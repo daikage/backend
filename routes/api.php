@@ -17,11 +17,13 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/payment/verify/{gateway}', [\App\Http\Controllers\Api\PaymentController::class, 'verify']);
 
     // Rides
-    Route::post('/rides/request', [\App\Http\Controllers\Api\RideController::class, 'requestRide']);
+    Route::get('/rides/active', [\App\Http\Controllers\Api\RideController::class, 'active']);
+    Route::post('/rides', [\App\Http\Controllers\Api\RideController::class, 'requestRide']);
     Route::post('/rides/{ride}/accept', [\App\Http\Controllers\Api\RideController::class, 'acceptRide']);
     Route::post('/rides/{ride}/status', [\App\Http\Controllers\Api\RideController::class, 'updateStatus']);
     Route::post('/rides/{ride}/location', [\App\Http\Controllers\Api\RideController::class, 'updateLocation']);
-    Route::get('/rides/active', [\App\Http\Controllers\Api\RideController::class, 'active']);
+    Route::post('/rides/{ride}/rate', [\App\Http\Controllers\Api\RatingController::class, 'rate']);
+    Route::get('/rides/{ride}', [\App\Http\Controllers\Api\RideController::class, 'show']);
     Route::get('/rides/available', [\App\Http\Controllers\Api\RideController::class, 'available']);
     Route::get('/rides/{ride}', [\App\Http\Controllers\Api\RideController::class, 'show']);
 

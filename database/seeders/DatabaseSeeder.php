@@ -13,6 +13,22 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
+        // Ride Categories
+        $economy = \App\Models\RideCategory::firstOrCreate(
+            ['name' => 'Economy'],
+            ['base_fare' => 1500, 'per_km_rate' => 200]
+        );
+
+        $premium = \App\Models\RideCategory::firstOrCreate(
+            ['name' => 'Premium'],
+            ['base_fare' => 3000, 'per_km_rate' => 400]
+        );
+
+        $xl = \App\Models\RideCategory::firstOrCreate(
+            ['name' => 'XL'],
+            ['base_fare' => 5000, 'per_km_rate' => 600]
+        );
+
         // Admin
         User::firstOrCreate(
             ['email' => 'admin@pairride.com'],

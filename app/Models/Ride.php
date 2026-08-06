@@ -39,4 +39,9 @@ class Ride extends Model
     {
         return $this->hasMany(Transaction::class);
     }
+
+    public function rideCategory(): BelongsTo
+    {
+        return $this->belongsTo(RideCategory::class);
+    }
 }
