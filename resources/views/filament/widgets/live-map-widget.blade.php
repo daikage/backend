@@ -199,6 +199,7 @@
                                 return el;
                             };
 
+                            const activeRides = JSON.parse(atob('{{ base64_encode(json_encode($activeRides)) }}'));
                             activeRides.forEach(ride => {
                                 this.markers[ride.id] = new maplibregl.Marker(createMarkerEl())
                                     .setLngLat([ride.lng, ride.lat])
@@ -291,7 +292,7 @@
                                 strokeWeight: 3,
                             });
 
-                            const activeRides = @json($activeRides);
+                            const activeRides = JSON.parse(atob('{{ base64_encode(json_encode($activeRides)) }}'));
                             activeRides.forEach(ride => {
                                 this.markers[ride.id] = new google.maps.Marker({
                                     position: { lat: ride.lat, lng: ride.lng },
