@@ -17,6 +17,8 @@ class LiveMapWidget extends Widget
     {
         return [
             'mapEngine' => Cache::get('admin_map_engine', 'google'),
+            'googleMapsApiKey' => config('services.maps.google_maps_api_key'),
+            'maplibreApiKey' => config('services.maps.maplibre_api_key'),
         ];
     }
 }

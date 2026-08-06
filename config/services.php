@@ -46,4 +46,9 @@ return [
         'encryption_key' => env('FLUTTERWAVE_ENCRYPTION_KEY'),
     ],
 
+    'maps' => [
+        'google_maps_api_key' => env('GOOGLE_MAPS_API_KEY'),
+        'maplibre_api_key' => env('MAPLIBRE_API_KEY'),
+    ],
+
 ];
