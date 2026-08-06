@@ -13,6 +13,10 @@ return new class extends Migration
     {
         Schema::create('driver_documents', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
+            $table->string('license_path')->nullable();
+            $table->string('insurance_path')->nullable();
+            $table->string('status')->default('pending'); // pending, approved, rejected
             $table->timestamps();
         });
     }

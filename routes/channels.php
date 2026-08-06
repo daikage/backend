@@ -17,12 +17,14 @@ Broadcast::channel('driver.{id}', function ($user, $id) {
 
 Broadcast::channel('ride.{id}', function ($user, $id) {
     // Only the ride's customer or assigned driver may join this channel.
-    return Ride::where('id', $id)
+    $canJoin = Ride::where('id', $id)
         ->where(function ($query) use ($user) {
             $query->where('customer_id', $user->id)
                 ->orWhere('driver_id', $user->id);
         })
         ->exists();
+        
+    return $canJoin ? ['id' => $user->id, 'name' => $user->name, 'role' => $user->role] : false;
 });
 
 Broadcast::channel('admin.map', function ($user) {

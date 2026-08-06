@@ -35,6 +35,16 @@ class Ride extends Model
         return $this->belongsTo(User::class, 'driver_id');
     }
 
+    public function ratings()
+    {
+        return $this->hasMany(Rating::class);
+    }
+
+    public function messages()
+    {
+        return $this->hasMany(Message::class);
+    }
+
     public function transactions(): HasMany
     {
         return $this->hasMany(Transaction::class);

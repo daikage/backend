@@ -13,6 +13,11 @@ return new class extends Migration
     {
         Schema::create('sos_alerts', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('ride_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
+            $table->decimal('lat', 10, 8);
+            $table->decimal('lng', 11, 8);
+            $table->string('status')->default('active'); // active, resolved
             $table->timestamps();
         });
     }

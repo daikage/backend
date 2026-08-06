@@ -120,6 +120,15 @@ class AuthController extends Controller
             return response()->json(['error' => 'Only drivers can toggle availability.'], 403);
         }
 
+        if (! $user->is_online) {
+            $document = \App\Models\DriverDocument::where('user_id', $user->id)->first();
+            if (!$document || $document->status !== 'approved') {
+                return response()->json([
+                    'error' => 'You cannot go online until your KYC documents are approved.'
+                ], 403);
+            }
+        }
+
         $user->update(['is_online' => ! $user->is_online]);
 
         return response()->json([

@@ -33,6 +33,17 @@ Route::middleware('auth:sanctum')->group(function () {
     // Wallets and Earnings
     Route::get('/driver/wallet', [\App\Http\Controllers\Api\EarningController::class, 'wallet']);
     Route::get('/driver/earnings', [\App\Http\Controllers\Api\EarningController::class, 'earnings']);
+    
+    // Chat
+    Route::get('/rides/{ride}/messages', [\App\Http\Controllers\Api\ChatController::class, 'index']);
+    Route::post('/rides/{ride}/messages', [\App\Http\Controllers\Api\ChatController::class, 'store']);
+    
+    // SOS
+    Route::post('/rides/{ride}/sos', [\App\Http\Controllers\Api\SosController::class, 'store']);
+    
+    // Driver KYC Documents
+    Route::get('/driver/documents', [\App\Http\Controllers\Api\DocumentController::class, 'show']);
+    Route::post('/driver/documents', [\App\Http\Controllers\Api\DocumentController::class, 'upload']);
 });
 
 // Public Config Routes
