@@ -290,8 +290,8 @@
                 <div class="map-stat-card">
                     <p class="map-stat-label">Drivers Online</p>
                     <div style="display: flex; align-items: flex-end; gap: 0.5rem;">
-                        <span style="font-size: 1.5rem; line-height: 1;" class="map-stat-value text-gray-800 dark:text-gray-100">24</span>
-                        <span style="font-size: 0.875rem; color: #22c55e; font-weight: 500; margin-bottom: 0.125rem;">↑ 12%</span>
+                        <span style="font-size: 1.5rem; line-height: 1;" class="map-stat-value text-gray-800 dark:text-gray-100">{{ $onlineDriversCount }}</span>
+                        <span style="font-size: 0.875rem; color: #6b7280; font-weight: 500; margin-bottom: 0.125rem;">Active now</span>
                     </div>
                 </div>
             </div>

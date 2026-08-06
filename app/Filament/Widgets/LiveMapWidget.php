@@ -19,6 +19,7 @@ class LiveMapWidget extends Widget
             'mapEngine' => Cache::get('admin_map_engine', 'google'),
             'googleMapsApiKey' => config('services.maps.google_maps_api_key'),
             'maplibreApiKey' => config('services.maps.maplibre_api_key'),
+            'onlineDriversCount' => \App\Models\User::where('role', 'driver')->where('is_online', true)->count(),
         ];
     }
 }
