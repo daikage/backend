@@ -1,14 +1,3 @@
 <x-filament-panels::page>
-    <x-filament-panels::form wire:submit="save">
-        {{ $this->form }}
-
-        <x-filament-panels::form.actions
-            :actions="[
-                \Filament\Actions\Action::make('save')
-                    ->label('Save Settings')
-                    ->submit('save')
-                    ->color('primary'),
-            ]"
-        />
-    </x-filament-panels::form>
+    {{ $this->form }}
 </x-filament-panels::page>

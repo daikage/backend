@@ -13,6 +13,12 @@ class RideController extends Controller
 {
     public function requestRide(Request $request)
     {
+        $user = $request->user();
+
+        if (! $user->isCustomer()) {
+            return response()->json(['error' => 'Only customers can request rides.'], 403);
+        }
+
         $request->validate([
             'pickup_lat' => 'required|numeric',
             'pickup_lng' => 'required|numeric',
@@ -26,7 +32,7 @@ class RideController extends Controller
         $fare = 1500 + ($request->distance_km * 200); // Base fare + Per KM
 
         $ride = Ride::create([
-            'customer_id' => $request->user()->id,
+            'customer_id' => $user->id,
             'pickup_address' => $request->pickup_address,
             'pickup_lat' => $request->pickup_lat,
             'pickup_lng' => $request->pickup_lng,
@@ -45,12 +51,18 @@ class RideController extends Controller
 
     public function acceptRide(Request $request, Ride $ride)
     {
+        $user = $request->user();
+
+        if (! $user->isDriver()) {
+            return response()->json(['error' => 'Only drivers can accept rides.'], 403);
+        }
+
         if ($ride->status !== 'pending') {
             return response()->json(['error' => 'Ride is no longer available'], 400);
         }
 
         $ride->update([
-            'driver_id' => $request->user()->id,
+            'driver_id' => $user->id,
             'status' => 'accepted'
         ]);
 
@@ -61,11 +73,27 @@ class RideController extends Controller
 
     public function updateStatus(Request $request, Ride $ride)
     {
+        $user = $request->user();
+
+        if ($ride->driver_id !== $user->id) {
+            return response()->json(['error' => 'Only the assigned driver can update this ride.'], 403);
+        }
+
         $request->validate([
             'status' => 'required|in:arrived,started,completed,cancelled'
         ]);
 
-        $ride->update(['status' => $request->status]);
+        $data = ['status' => $request->status];
+
+        if ($request->status === 'started') {
+            $data['started_at'] = now();
+        }
+
+        if ($request->status === 'completed' || $request->status === 'cancelled') {
+            $data['completed_at'] = now();
+        }
+
+        $ride->update($data);
 
         broadcast(new RideStatusUpdated($ride))->toOthers();
 
@@ -74,6 +102,12 @@ class RideController extends Controller
 
     public function updateLocation(Request $request, Ride $ride)
     {
+        $user = $request->user();
+
+        if ($ride->driver_id !== $user->id) {
+            return response()->json(['error' => 'Only the assigned driver can update the location.'], 403);
+        }
+
         $request->validate([
             'lat' => 'required|numeric',
             'lng' => 'required|numeric',
@@ -83,5 +117,47 @@ class RideController extends Controller
         broadcast(new DriverLocationUpdated($ride->id, $request->lat, $request->lng, $request->heading))->toOthers();
 
         return response()->json(['success' => true]);
+    }
+
+    public function show(Request $request, Ride $ride)
+    {
+        $user = $request->user();
+
+        if ($ride->customer_id !== $user->id && $ride->driver_id !== $user->id) {
+            return response()->json(['error' => 'You are not part of this ride.'], 403);
+        }
+
+        return response()->json(['ride' => $ride->load('customer', 'driver')]);
+    }
+
+    public function active(Request $request)
+    {
+        $user = $request->user();
+
+        $query = Ride::whereIn('status', ['pending', 'accepted', 'arrived', 'started'])
+            ->where(function ($q) use ($user) {
+                $q->where('customer_id', $user->id)->orWhere('driver_id', $user->id);
+            })
+            ->with('customer', 'driver')
+            ->latest();
+
+        return response()->json(['ride' => $query->first()]);
+    }
+
+    public function available(Request $request)
+    {
+        $user = $request->user();
+
+        if (! $user->isDriver()) {
+            return response()->json(['error' => 'Only drivers can view available rides.'], 403);
+        }
+
+        $rides = Ride::where('status', 'pending')
+            ->whereNull('driver_id')
+            ->with('customer')
+            ->latest()
+            ->get();
+
+        return response()->json(['rides' => $rides]);
     }
 }

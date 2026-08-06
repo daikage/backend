@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Broadcast;
+use App\Models\Ride;
 
 Broadcast::channel('App.Models.User.{id}', function ($user, $id) {
     return (int) $user->id === (int) $id;
@@ -15,5 +16,11 @@ Broadcast::channel('driver.{id}', function ($user, $id) {
 });
 
 Broadcast::channel('ride.{id}', function ($user, $id) {
-    return true; // add proper authorization later (driver or customer of this ride)
+    // Only the ride's customer or assigned driver may join this channel.
+    return Ride::where('id', $id)
+        ->where(function ($query) use ($user) {
+            $query->where('customer_id', $user->id)
+                ->orWhere('driver_id', $user->id);
+        })
+        ->exists();
 });

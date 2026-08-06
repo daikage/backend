@@ -3,12 +3,12 @@
 namespace App\Filament\Pages;
 
 use Filament\Forms\Concerns\InteractsWithForms;
-use Filament\Forms\Contracts\HasForms;
-use Filament\Pages\Page;
 use Filament\Forms\Components\Select;
-use Filament\Forms\Form;
-use Illuminate\Support\Facades\Cache;
+use Filament\Forms\Contracts\HasForms;
 use Filament\Notifications\Notification;
+use Filament\Pages\Page;
+use Filament\Schemas\Schema;
+use Illuminate\Support\Facades\Cache;
 
 class MapSettings extends Page implements HasForms
 {
@@ -35,10 +35,10 @@ class MapSettings extends Page implements HasForms
         ]);
     }
 
-    public function form(Form $form): Form
+    public function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
+        return $schema
+            ->components([
                 Select::make('map_engine')
                     ->label('Admin Dashboard Map Engine')
                     ->options([
@@ -59,5 +59,15 @@ class MapSettings extends Page implements HasForms
             ->title('Settings saved successfully!')
             ->success()
             ->send();
+    }
+
+    protected function getHeaderActions(): array
+    {
+        return [
+            \Filament\Actions\Action::make('save')
+                ->label('Save Settings')
+                ->color('primary')
+                ->action(fn () => $this->save()),
+        ];
     }
 }

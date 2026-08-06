@@ -112,6 +112,21 @@ class AuthController extends Controller
         ]);
     }
 
+    public function toggleAvailability(Request $request)
+    {
+        $user = $request->user();
+
+        if (! $user->isDriver()) {
+            return response()->json(['error' => 'Only drivers can toggle availability.'], 403);
+        }
+
+        $user->update(['is_online' => ! $user->is_online]);
+
+        return response()->json([
+            'is_online' => $user->is_online,
+        ]);
+    }
+
     public function user(Request $request)
     {
         return response()->json($request->user());

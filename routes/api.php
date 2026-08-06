@@ -21,4 +21,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/rides/{ride}/accept', [\App\Http\Controllers\Api\RideController::class, 'acceptRide']);
     Route::post('/rides/{ride}/status', [\App\Http\Controllers\Api\RideController::class, 'updateStatus']);
     Route::post('/rides/{ride}/location', [\App\Http\Controllers\Api\RideController::class, 'updateLocation']);
+    Route::get('/rides/active', [\App\Http\Controllers\Api\RideController::class, 'active']);
+    Route::get('/rides/available', [\App\Http\Controllers\Api\RideController::class, 'available']);
+    Route::get('/rides/{ride}', [\App\Http\Controllers\Api\RideController::class, 'show']);
+
+    // Driver availability
+    Route::post('/driver/availability', [AuthController::class, 'toggleAvailability']);
 });
