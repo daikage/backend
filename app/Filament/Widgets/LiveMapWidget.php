@@ -15,11 +15,22 @@ class LiveMapWidget extends Widget
 
     protected function getViewData(): array
     {
+        $activeRides = \App\Models\Ride::whereIn('status', ['pending', 'accepted', 'arrived', 'started'])
+            ->get(['id', 'driver_id', 'pickup_lat', 'pickup_lng'])
+            ->map(function ($ride) {
+                return [
+                    'id' => $ride->id,
+                    'lat' => $ride->pickup_lat,
+                    'lng' => $ride->pickup_lng,
+                ];
+            })->toArray();
+
         return [
             'mapEngine' => Cache::get('admin_map_engine', 'google'),
             'googleMapsApiKey' => config('services.maps.google_maps_api_key'),
             'maplibreApiKey' => config('services.maps.maplibre_api_key'),
             'onlineDriversCount' => \App\Models\User::where('role', 'driver')->where('is_online', true)->count(),
+            'activeRides' => $activeRides,
         ];
     }
 }

@@ -24,3 +24,7 @@ Broadcast::channel('ride.{id}', function ($user, $id) {
         })
         ->exists();
 });
+
+Broadcast::channel('admin.map', function ($user) {
+    return $user->role === 'admin';
+});

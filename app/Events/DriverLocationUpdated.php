@@ -28,6 +28,7 @@ class DriverLocationUpdated implements ShouldBroadcastNow
     {
         return [
             new PrivateChannel('ride.' . $this->rideId),
+            new PrivateChannel('admin.map'),
         ];
     }
 }

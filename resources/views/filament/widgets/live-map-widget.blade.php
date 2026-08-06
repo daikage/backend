@@ -153,11 +153,29 @@
             </div>
         </div>
         
+        <script src="https://js.pusher.com/8.2.0/pusher.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/laravel-echo@1.16.1/dist/echo.iife.js"></script>
+        
         <div class="map-container-wrapper" wire:ignore>
             
             @if($mapEngine === 'maplibre')
                 <div 
                     x-data="{
+                        markers: {},
+                        initEcho() {
+                            if (window.Echo) return;
+                            window.Pusher = Pusher;
+                            window.Echo = new Echo({
+                                broadcaster: 'pusher',
+                                key: '{{ env('PUSHER_APP_KEY') }}',
+                                cluster: '{{ env('PUSHER_APP_CLUSTER', 'mt1') }}',
+                                wsHost: '{{ env('PUSHER_HOST') }}' ? '{{ env('PUSHER_HOST') }}' : `ws-${'{{ env('PUSHER_APP_CLUSTER', 'mt1') }}'}.pusher.com`,
+                                wsPort: {{ env('PUSHER_PORT') ?: 80 }},
+                                wssPort: {{ env('PUSHER_PORT') ?: 443 }},
+                                forceTLS: '{{ env('PUSHER_SCHEME', 'https') }}' === 'https',
+                                enabledTransports: ['ws', 'wss'],
+                            });
+                        },
                         initMap() {
                             var mapStyle = '{{ $maplibreApiKey ? "https://api.maptiler.com/maps/streets/style.json?key=".$maplibreApiKey : "https://demotiles.maplibre.org/style.json" }}';
                             var map = new maplibregl.Map({
@@ -168,17 +186,36 @@
                                 attributionControl: false
                             });
                             
-                            var el = document.createElement('div');
-                            el.style.width = '30px';
-                            el.style.height = '30px';
-                            el.style.backgroundColor = '#556B2F';
-                            el.style.borderRadius = '50%';
-                            el.style.border = '3px solid white';
-                            el.style.boxShadow = '0 2px 4px rgba(0,0,0,0.3)';
+                            const activeRides = @json($activeRides);
                             
-                            new maplibregl.Marker(el)
-                                .setLngLat([3.3792, 6.5244])
-                                .addTo(map);
+                            const createMarkerEl = () => {
+                                var el = document.createElement('div');
+                                el.style.width = '30px';
+                                el.style.height = '30px';
+                                el.style.backgroundColor = '#556B2F';
+                                el.style.borderRadius = '50%';
+                                el.style.border = '3px solid white';
+                                el.style.boxShadow = '0 2px 4px rgba(0,0,0,0.3)';
+                                return el;
+                            };
+
+                            activeRides.forEach(ride => {
+                                this.markers[ride.id] = new maplibregl.Marker(createMarkerEl())
+                                    .setLngLat([ride.lng, ride.lat])
+                                    .addTo(map);
+                            });
+
+                            this.initEcho();
+                            window.Echo.private('admin.map')
+                                .listen('DriverLocationUpdated', (e) => {
+                                    if (this.markers[e.rideId]) {
+                                        this.markers[e.rideId].setLngLat([e.lng, e.lat]);
+                                    } else {
+                                        this.markers[e.rideId] = new maplibregl.Marker(createMarkerEl())
+                                            .setLngLat([e.lng, e.lat])
+                                            .addTo(map);
+                                    }
+                                });
                         }
                     }"
                     x-init="
@@ -203,6 +240,21 @@
             @else
                 <div 
                     x-data="{
+                        markers: {},
+                        initEcho() {
+                            if (window.Echo) return;
+                            window.Pusher = Pusher;
+                            window.Echo = new Echo({
+                                broadcaster: 'pusher',
+                                key: '{{ env('PUSHER_APP_KEY') }}',
+                                cluster: '{{ env('PUSHER_APP_CLUSTER', 'mt1') }}',
+                                wsHost: '{{ env('PUSHER_HOST') }}' ? '{{ env('PUSHER_HOST') }}' : `ws-${'{{ env('PUSHER_APP_CLUSTER', 'mt1') }}'}.pusher.com`,
+                                wsPort: {{ env('PUSHER_PORT') ?: 80 }},
+                                wssPort: {{ env('PUSHER_PORT') ?: 443 }},
+                                forceTLS: '{{ env('PUSHER_SCHEME', 'https') }}' === 'https',
+                                enabledTransports: ['ws', 'wss'],
+                            });
+                        },
                         initMap() {
                             if (!this.$refs.mapContainer) return;
                             const lagos = { lat: 6.5244, lng: 3.3792 };
@@ -230,19 +282,37 @@
                                 ]
                             });
                             
-                            new google.maps.Marker({
-                                position: lagos,
-                                map: map,
-                                title: 'Active Driver',
-                                icon: {
-                                    path: google.maps.SymbolPath.CIRCLE,
-                                    scale: 10,
-                                    fillColor: '#556B2F',
-                                    fillOpacity: 1,
-                                    strokeColor: '#ffffff',
-                                    strokeWeight: 3,
-                                },
+                            const getIcon = () => ({
+                                path: google.maps.SymbolPath.CIRCLE,
+                                scale: 10,
+                                fillColor: '#556B2F',
+                                fillOpacity: 1,
+                                strokeColor: '#ffffff',
+                                strokeWeight: 3,
                             });
+
+                            const activeRides = @json($activeRides);
+                            activeRides.forEach(ride => {
+                                this.markers[ride.id] = new google.maps.Marker({
+                                    position: { lat: ride.lat, lng: ride.lng },
+                                    map: map,
+                                    icon: getIcon(),
+                                });
+                            });
+
+                            this.initEcho();
+                            window.Echo.private('admin.map')
+                                .listen('DriverLocationUpdated', (e) => {
+                                    if (this.markers[e.rideId]) {
+                                        this.markers[e.rideId].setPosition({ lat: e.lat, lng: e.lng });
+                                    } else {
+                                        this.markers[e.rideId] = new google.maps.Marker({
+                                            position: { lat: e.lat, lng: e.lng },
+                                            map: map,
+                                            icon: getIcon(),
+                                        });
+                                    }
+                                });
                         }
                     }"
                     x-init="
