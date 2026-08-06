@@ -29,4 +29,11 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Driver availability
     Route::post('/driver/availability', [AuthController::class, 'toggleAvailability']);
+    
+    // Wallets and Earnings
+    Route::get('/driver/wallet', [\App\Http\Controllers\Api\EarningController::class, 'wallet']);
+    Route::get('/driver/earnings', [\App\Http\Controllers\Api\EarningController::class, 'earnings']);
 });
+
+// Public Config Routes
+Route::get('/ride-categories', [\App\Http\Controllers\Api\RideCategoryController::class, 'index']);
