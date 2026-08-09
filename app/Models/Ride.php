@@ -22,6 +22,7 @@ class Ride extends Model
             'actual_fare' => 'float',
             'started_at' => 'datetime',
             'completed_at' => 'datetime',
+            'service_meta' => 'array',
         ];
     }
 
@@ -53,5 +54,18 @@ class Ride extends Model
     public function rideCategory(): BelongsTo
     {
         return $this->belongsTo(RideCategory::class);
+    }
+
+    /**
+     * Get the fare multiplier for the given service type.
+     */
+    public static function fareMultiplier(string $serviceType): float
+    {
+        return match ($serviceType) {
+            'interstate' => 1.5,
+            'haulage' => 2.0,
+            'dispatch' => 1.3,
+            default => 1.0,
+        };
     }
 }

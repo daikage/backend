@@ -14,6 +14,11 @@ use App\Events\DriverLocationUpdated;
 
 class RideController extends Controller
 {
+    /**
+     * Valid service types for rides.
+     */
+    private const VALID_SERVICE_TYPES = ['single', 'interstate', 'haulage', 'dispatch'];
+
     public function requestRide(Request $request)
     {
         $user = $request->user();
@@ -24,6 +29,7 @@ class RideController extends Controller
 
         $request->validate([
             'ride_category_id' => 'nullable|exists:ride_categories,id',
+            'service_type' => 'nullable|in:single,interstate,haulage,dispatch',
             'pickup_lat' => 'required|numeric',
             'pickup_lng' => 'required|numeric',
             'pickup_address' => 'required|string',
@@ -31,21 +37,42 @@ class RideController extends Controller
             'dropoff_lng' => 'required|numeric',
             'dropoff_address' => 'required|string',
             'distance_km' => 'required|numeric',
+            'service_meta' => 'nullable|array',
+            // Interstate fields
+            'service_meta.destination_state' => 'nullable|string|max:100',
+            'service_meta.departure_date' => 'nullable|date',
+            'service_meta.num_passengers' => 'nullable|integer|min:1|max:50',
+            // Haulage fields
+            'service_meta.cargo_description' => 'nullable|string|max:500',
+            'service_meta.cargo_weight_kg' => 'nullable|numeric|min:0',
+            'service_meta.vehicle_type_required' => 'nullable|in:van,truck,flatbed',
+            // Dispatch fields
+            'service_meta.package_description' => 'nullable|string|max:500',
+            'service_meta.recipient_name' => 'nullable|string|max:100',
+            'service_meta.recipient_phone' => 'nullable|string|max:20',
         ]);
+
+        $serviceType = $request->service_type ?? 'single';
 
         $category = null;
         if ($request->ride_category_id) {
             $category = RideCategory::find($request->ride_category_id);
         }
         if (!$category) {
-            $category = RideCategory::first(); // Fallback to economy
+            $category = RideCategory::where('service_type', $serviceType)->first()
+                ?? RideCategory::first(); // Fallback
         }
 
-        $fare = $category->base_fare + ($request->distance_km * $category->per_km_rate);
+        // Calculate fare with service type multiplier
+        $baseFare = $category->base_fare + ($request->distance_km * $category->per_km_rate);
+        $multiplier = Ride::fareMultiplier($serviceType);
+        $fare = $baseFare * $multiplier;
 
         $ride = Ride::create([
             'customer_id' => $user->id,
             'ride_category_id' => $category->id,
+            'service_type' => $serviceType,
+            'service_meta' => $request->service_meta,
             'platform_commission' => 0.15, // 15% default platform commission
             'pickup_address' => $request->pickup_address,
             'pickup_lat' => $request->pickup_lat,
@@ -60,7 +87,7 @@ class RideController extends Controller
 
         broadcast(new RideRequested($ride))->toOthers();
 
-        return response()->json(['ride' => $ride]);
+        return response()->json(['ride' => $ride->load('rideCategory')]);
     }
 
     public function acceptRide(Request $request, Ride $ride)
@@ -82,7 +109,7 @@ class RideController extends Controller
 
         broadcast(new RideStatusUpdated($ride))->toOthers();
 
-        return response()->json(['ride' => $ride]);
+        return response()->json(['ride' => $ride->load('rideCategory')]);
     }
 
     public function updateStatus(Request $request, Ride $ride)
@@ -128,7 +155,7 @@ class RideController extends Controller
 
         broadcast(new RideStatusUpdated($ride))->toOthers();
 
-        return response()->json(['ride' => $ride]);
+        return response()->json(['ride' => $ride->load('rideCategory')]);
     }
 
     public function updateLocation(Request $request, Ride $ride)
@@ -158,7 +185,7 @@ class RideController extends Controller
             return response()->json(['error' => 'You are not part of this ride.'], 403);
         }
 
-        return response()->json(['ride' => $ride->load('customer', 'driver')]);
+        return response()->json(['ride' => $ride->load('customer', 'driver', 'rideCategory')]);
     }
 
     public function active(Request $request)
@@ -169,7 +196,7 @@ class RideController extends Controller
             ->where(function ($q) use ($user) {
                 $q->where('customer_id', $user->id)->orWhere('driver_id', $user->id);
             })
-            ->with('customer', 'driver')
+            ->with('customer', 'driver', 'rideCategory')
             ->latest();
 
         return response()->json(['ride' => $query->first()]);
@@ -183,11 +210,17 @@ class RideController extends Controller
             return response()->json(['error' => 'Only drivers can view available rides.'], 403);
         }
 
-        $rides = Ride::where('status', 'pending')
+        $query = Ride::where('status', 'pending')
             ->whereNull('driver_id')
-            ->with('customer')
-            ->latest()
-            ->get();
+            ->with('customer', 'rideCategory')
+            ->latest();
+
+        // Optional service type filter
+        if ($request->has('service_type') && in_array($request->service_type, self::VALID_SERVICE_TYPES)) {
+            $query->where('service_type', $request->service_type);
+        }
+
+        $rides = $query->get();
 
         return response()->json(['rides' => $rides]);
     }
