@@ -18,23 +18,23 @@ class DriverDocumentForm
                     ->required()
                     ->label('Driver'),
                 FileUpload::make('license_path')
-                    ->image()
+                    ->acceptedFileTypes(['application/pdf', 'image/jpeg', 'image/png', 'image/webp'])
                     ->directory('documents')
                     ->label('License Document'),
                 FileUpload::make('insurance_path')
-                    ->image()
+                    ->acceptedFileTypes(['application/pdf', 'image/jpeg', 'image/png', 'image/webp'])
                     ->directory('documents')
                     ->label('Insurance Document'),
                 FileUpload::make('vehicle_license_path')
-                    ->image()
+                    ->acceptedFileTypes(['application/pdf', 'image/jpeg', 'image/png', 'image/webp'])
                     ->directory('documents')
                     ->label('Vehicle License'),
                 FileUpload::make('road_worthiness_path')
-                    ->image()
+                    ->acceptedFileTypes(['application/pdf', 'image/jpeg', 'image/png', 'image/webp'])
                     ->directory('documents')
                     ->label('Road Worthiness Certificate'),
                 FileUpload::make('hackney_permit_path')
-                    ->image()
+                    ->acceptedFileTypes(['application/pdf', 'image/jpeg', 'image/png', 'image/webp'])
                     ->directory('documents')
                     ->label('Hackney Permit'),
                 Select::make('status')

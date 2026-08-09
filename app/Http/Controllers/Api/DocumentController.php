@@ -22,11 +22,11 @@ class DocumentController extends Controller
         }
 
         $request->validate([
-            'license' => 'nullable|image|max:5120',
-            'insurance' => 'nullable|image|max:5120',
-            'vehicle_license' => 'nullable|image|max:5120',
-            'road_worthiness' => 'nullable|image|max:5120',
-            'hackney_permit' => 'nullable|image|max:5120',
+            'license' => 'nullable|mimes:jpg,jpeg,png,webp,pdf|max:5120',
+            'insurance' => 'nullable|mimes:jpg,jpeg,png,webp,pdf|max:5120',
+            'vehicle_license' => 'nullable|mimes:jpg,jpeg,png,webp,pdf|max:5120',
+            'road_worthiness' => 'nullable|mimes:jpg,jpeg,png,webp,pdf|max:5120',
+            'hackney_permit' => 'nullable|mimes:jpg,jpeg,png,webp,pdf|max:5120',
         ]);
 
         $document = DriverDocument::firstOrCreate(['user_id' => $request->user()->id]);
