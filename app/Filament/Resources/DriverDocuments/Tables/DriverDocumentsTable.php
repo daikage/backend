@@ -24,6 +24,12 @@ class DriverDocumentsTable
                     ->label('License'),
                 ImageColumn::make('insurance_path')
                     ->label('Insurance'),
+                ImageColumn::make('vehicle_license_path')
+                    ->label('Vehicle License'),
+                ImageColumn::make('road_worthiness_path')
+                    ->label('Road Worthiness'),
+                ImageColumn::make('hackney_permit_path')
+                    ->label('Hackney Permit'),
                 TextColumn::make('status')
                     ->badge()
                     ->color(fn (string $state): string => match ($state) {

@@ -25,6 +25,18 @@ class DriverDocumentForm
                     ->image()
                     ->directory('documents')
                     ->label('Insurance Document'),
+                FileUpload::make('vehicle_license_path')
+                    ->image()
+                    ->directory('documents')
+                    ->label('Vehicle License'),
+                FileUpload::make('road_worthiness_path')
+                    ->image()
+                    ->directory('documents')
+                    ->label('Road Worthiness Certificate'),
+                FileUpload::make('hackney_permit_path')
+                    ->image()
+                    ->directory('documents')
+                    ->label('Hackney Permit'),
                 Select::make('status')
                     ->options([
                         'pending' => 'Pending',

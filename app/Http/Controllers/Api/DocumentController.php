@@ -17,25 +17,44 @@ class DocumentController extends Controller
 
     public function upload(Request $request)
     {
+        if (!$request->hasAny(['license', 'insurance', 'vehicle_license', 'road_worthiness', 'hackney_permit'])) {
+            return response()->json(['error' => 'Please upload at least one document.'], 400);
+        }
+
         $request->validate([
-            'license' => 'required_without:insurance|image|max:5120',
-            'insurance' => 'required_without:license|image|max:5120',
+            'license' => 'nullable|image|max:5120',
+            'insurance' => 'nullable|image|max:5120',
+            'vehicle_license' => 'nullable|image|max:5120',
+            'road_worthiness' => 'nullable|image|max:5120',
+            'hackney_permit' => 'nullable|image|max:5120',
         ]);
 
         $document = DriverDocument::firstOrCreate(['user_id' => $request->user()->id]);
 
+        $filesUpdated = false;
+
         if ($request->hasFile('license')) {
-            $path = $request->file('license')->store('documents', 'public');
-            $document->license_path = $path;
+            $document->license_path = $request->file('license')->store('documents', 'public');
+            $filesUpdated = true;
         }
-
         if ($request->hasFile('insurance')) {
-            $path = $request->file('insurance')->store('documents', 'public');
-            $document->insurance_path = $path;
+            $document->insurance_path = $request->file('insurance')->store('documents', 'public');
+            $filesUpdated = true;
+        }
+        if ($request->hasFile('vehicle_license')) {
+            $document->vehicle_license_path = $request->file('vehicle_license')->store('documents', 'public');
+            $filesUpdated = true;
+        }
+        if ($request->hasFile('road_worthiness')) {
+            $document->road_worthiness_path = $request->file('road_worthiness')->store('documents', 'public');
+            $filesUpdated = true;
+        }
+        if ($request->hasFile('hackney_permit')) {
+            $document->hackney_permit_path = $request->file('hackney_permit')->store('documents', 'public');
+            $filesUpdated = true;
         }
 
-        // Reset status to pending if they uploaded a new document
-        if ($request->hasFile('license') || $request->hasFile('insurance')) {
+        if ($filesUpdated) {
             $document->status = 'pending';
         }
 
