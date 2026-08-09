@@ -18,8 +18,8 @@ class DocumentController extends Controller
     public function upload(Request $request)
     {
         $request->validate([
-            'license' => 'nullable|image|max:5120',
-            'insurance' => 'nullable|image|max:5120',
+            'license' => 'required_without:insurance|image|max:5120',
+            'insurance' => 'required_without:license|image|max:5120',
         ]);
 
         $document = DriverDocument::firstOrCreate(['user_id' => $request->user()->id]);

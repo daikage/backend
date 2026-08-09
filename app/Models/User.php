@@ -97,4 +97,9 @@ class User extends Authenticatable implements FilamentUser
     {
         return $this->hasMany(Rating::class, 'ratee_id');
     }
+
+    public function driverDocument(): HasOne
+    {
+        return $this->hasOne(DriverDocument::class, 'user_id');
+    }
 }
