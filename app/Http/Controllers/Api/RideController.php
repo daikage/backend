@@ -224,4 +224,21 @@ class RideController extends Controller
 
         return response()->json(['rides' => $rides]);
     }
+
+    public function history(Request $request)
+    {
+        $user = $request->user();
+
+        $query = Ride::whereIn('status', ['completed', 'cancelled'])
+            ->where(function ($q) use ($user) {
+                $q->where('customer_id', $user->id)->orWhere('driver_id', $user->id);
+            })
+            ->with(['customer', 'driver', 'rideCategory'])
+            ->latest();
+
+        // Optional pagination or limit
+        $rides = $query->paginate(20);
+
+        return response()->json(['rides' => $rides]);
+    }
 }

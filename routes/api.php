@@ -25,6 +25,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/rides/{ride}/rate', [\App\Http\Controllers\Api\RatingController::class, 'rate']);
     Route::get('/rides/{ride}', [\App\Http\Controllers\Api\RideController::class, 'show']);
     Route::get('/rides/available', [\App\Http\Controllers\Api\RideController::class, 'available']);
+    Route::get('/rides/history', [\App\Http\Controllers\Api\RideController::class, 'history']);
     Route::get('/rides/{ride}', [\App\Http\Controllers\Api\RideController::class, 'show']);
 
     // Driver availability
