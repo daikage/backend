@@ -73,7 +73,7 @@ class RideController extends Controller
             'ride_category_id' => $category->id,
             'service_type' => $serviceType,
             'service_meta' => $request->service_meta,
-            'platform_commission' => 0.15, // 15% default platform commission
+            'platform_commission' => 0.20, // 20% default platform commission
             'pickup_address' => $request->pickup_address,
             'pickup_lat' => $request->pickup_lat,
             'pickup_lng' => $request->pickup_lng,
@@ -139,7 +139,7 @@ class RideController extends Controller
         if ($request->status === 'completed') {
             // Process earnings
             $fare = $ride->actual_fare ?? $ride->estimated_fare;
-            $commission = $fare * ($ride->platform_commission ?? 0.15);
+            $commission = $fare * ($ride->platform_commission ?? 0.20);
             $driverEarning = $fare - $commission;
 
             Earning::create([
