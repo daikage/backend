@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Ride;
 use App\Models\Rating;
+use App\Models\User;
 use Illuminate\Http\Request;
 
 class RatingController extends Controller
@@ -42,6 +43,13 @@ class RatingController extends Controller
             'stars' => $request->stars,
             'comment' => $request->comment,
         ]);
+
+        // Recalculate the ratee's average rating
+        $ratee = User::find($rateeId);
+        if ($ratee) {
+            $avg = Rating::where('ratee_id', $rateeId)->avg('stars');
+            $ratee->update(['rating' => round($avg, 1)]);
+        }
 
         return response()->json(['rating' => $rating]);
     }

@@ -118,4 +118,65 @@ class PaymentController extends Controller
         $transaction->update(['payment_status' => 'failed']);
         return response()->json(['message' => 'Payment failed'], 400);
     }
+
+    /**
+     * Paystack server-to-server webhook — called by Paystack after payment.
+     */
+    public function paystackWebhook(Request $request)
+    {
+        // Verify signature
+        $signature = $request->header('x-paystack-signature');
+        $secret = config('services.paystack.secret_key');
+        $computedSignature = hash_hmac('sha512', $request->getContent(), $secret);
+
+        if ($signature !== $computedSignature) {
+            return response()->json(['error' => 'Invalid signature'], 403);
+        }
+
+        $payload = $request->all();
+        if (($payload['event'] ?? '') !== 'charge.success') {
+            return response()->json(['message' => 'Event ignored']);
+        }
+
+        $reference = $payload['data']['reference'] ?? null;
+        if (!$reference) {
+            return response()->json(['error' => 'No reference'], 400);
+        }
+
+        $transaction = Transaction::where('transaction_reference', $reference)->first();
+        if ($transaction && $transaction->payment_status !== 'completed') {
+            $transaction->update(['payment_status' => 'completed']);
+        }
+
+        return response()->json(['message' => 'Webhook processed']);
+    }
+
+    /**
+     * Flutterwave server-to-server webhook.
+     */
+    public function flutterwaveWebhook(Request $request)
+    {
+        // Verify signature
+        $signature = $request->header('verif-hash');
+        $secret = config('services.flutterwave.encryption_key');
+
+        if ($signature !== $secret) {
+            return response()->json(['error' => 'Invalid signature'], 403);
+        }
+
+        $payload = $request->all();
+        $reference = $payload['data']['tx_ref'] ?? null;
+        $status = $payload['data']['status'] ?? '';
+
+        if (!$reference) {
+            return response()->json(['error' => 'No reference'], 400);
+        }
+
+        $transaction = Transaction::where('transaction_reference', $reference)->first();
+        if ($transaction && $transaction->payment_status !== 'completed' && $status === 'successful') {
+            $transaction->update(['payment_status' => 'completed']);
+        }
+
+        return response()->json(['message' => 'Webhook processed']);
+    }
 }

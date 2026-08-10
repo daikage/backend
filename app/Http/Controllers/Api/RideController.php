@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use App\Events\RideRequested;
 use App\Events\RideStatusUpdated;
 use App\Events\DriverLocationUpdated;
+use App\Jobs\SendRideReceipt;
 
 class RideController extends Controller
 {
@@ -151,6 +152,8 @@ class RideController extends Controller
 
             $wallet = Wallet::firstOrCreate(['user_id' => $ride->driver_id]);
             $wallet->increment('balance', $driverEarning);
+            
+            SendRideReceipt::dispatch($ride);
         }
 
         broadcast(new RideStatusUpdated($ride))->toOthers();
@@ -170,6 +173,12 @@ class RideController extends Controller
             'lat' => 'required|numeric',
             'lng' => 'required|numeric',
             'heading' => 'nullable|numeric'
+        ]);
+
+        // Persist the driver's last known location for proximity matching
+        $user->update([
+            'last_lat' => $request->lat,
+            'last_lng' => $request->lng,
         ]);
 
         broadcast(new DriverLocationUpdated($ride->id, $request->lat, $request->lng, $request->heading))->toOthers();
@@ -241,4 +250,69 @@ class RideController extends Controller
 
         return response()->json(['rides' => $rides]);
     }
+
+    /**
+     * Cancel a ride — only the customer can cancel, and only if it's still pending or accepted.
+     */
+    public function cancelRide(Request $request, Ride $ride)
+    {
+        $user = $request->user();
+
+        if ($ride->customer_id !== $user->id) {
+            return response()->json(['error' => 'Only the customer who requested this ride can cancel it.'], 403);
+        }
+
+        if (! in_array($ride->status, ['pending', 'accepted'])) {
+            return response()->json(['error' => 'This ride can no longer be cancelled.'], 400);
+        }
+
+        $ride->update([
+            'status' => 'cancelled',
+            'completed_at' => now(),
+        ]);
+
+        broadcast(new RideStatusUpdated($ride))->toOthers();
+
+        return response()->json(['message' => 'Ride cancelled successfully.', 'ride' => $ride->load('rideCategory')]);
+    }
+
+    /**
+     * Get a fare estimate without creating a ride.
+     */
+    public function estimate(Request $request)
+    {
+        $request->validate([
+            'ride_category_id' => 'nullable|exists:ride_categories,id',
+            'service_type' => 'nullable|in:single,interstate,haulage,dispatch',
+            'distance_km' => 'required|numeric|min:0.1',
+        ]);
+
+        $serviceType = $request->service_type ?? 'single';
+
+        $category = null;
+        if ($request->ride_category_id) {
+            $category = RideCategory::find($request->ride_category_id);
+        }
+        if (!$category) {
+            $category = RideCategory::where('service_type', $serviceType)->first()
+                ?? RideCategory::first();
+        }
+
+        if (!$category) {
+            return response()->json(['error' => 'No ride categories configured.'], 500);
+        }
+
+        $baseFare = $category->base_fare + ($request->distance_km * $category->per_km_rate);
+        $multiplier = Ride::fareMultiplier($serviceType);
+        $fare = round($baseFare * $multiplier, 2);
+
+        return response()->json([
+            'estimated_fare' => $fare,
+            'category' => $category,
+            'service_type' => $serviceType,
+            'distance_km' => $request->distance_km,
+            'multiplier' => $multiplier,
+        ]);
+    }
 }
+
