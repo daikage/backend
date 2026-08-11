@@ -24,41 +24,34 @@ class DocumentController extends Controller
         }
 
         $request->validate([
-            'license' => 'nullable|mimes:jpg,jpeg,png,webp,pdf|max:5120',
-            'insurance' => 'nullable|mimes:jpg,jpeg,png,webp,pdf|max:5120',
-            'vehicle_license' => 'nullable|mimes:jpg,jpeg,png,webp,pdf|max:5120',
-            'road_worthiness' => 'nullable|mimes:jpg,jpeg,png,webp,pdf|max:5120',
-            'hackney_permit' => 'nullable|mimes:jpg,jpeg,png,webp,pdf|max:5120',
+            'license' => 'nullable|file|max:5120',
+            'insurance' => 'nullable|file|max:5120',
+            'vehicle_license' => 'nullable|file|max:5120',
+            'road_worthiness' => 'nullable|file|max:5120',
+            'hackney_permit' => 'nullable|file|max:5120',
         ]);
 
         try {
             $document = DriverDocument::firstOrCreate(['user_id' => $request->user()->id]);
 
-            // Use the configured disk – defaults to 'public' locally,
-            // set DOCUMENT_DISK=s3 on Laravel Cloud for persistent storage.
-            $disk = env('DOCUMENT_DISK', 'public');
-
             $filesUpdated = false;
+            $fields = ['license', 'insurance', 'vehicle_license', 'road_worthiness', 'hackney_permit'];
 
-            if ($request->hasFile('license')) {
-                $document->license_path = $request->file('license')->store('documents', $disk);
-                $filesUpdated = true;
-            }
-            if ($request->hasFile('insurance')) {
-                $document->insurance_path = $request->file('insurance')->store('documents', $disk);
-                $filesUpdated = true;
-            }
-            if ($request->hasFile('vehicle_license')) {
-                $document->vehicle_license_path = $request->file('vehicle_license')->store('documents', $disk);
-                $filesUpdated = true;
-            }
-            if ($request->hasFile('road_worthiness')) {
-                $document->road_worthiness_path = $request->file('road_worthiness')->store('documents', $disk);
-                $filesUpdated = true;
-            }
-            if ($request->hasFile('hackney_permit')) {
-                $document->hackney_permit_path = $request->file('hackney_permit')->store('documents', $disk);
-                $filesUpdated = true;
+            foreach ($fields as $field) {
+                if ($request->hasFile($field)) {
+                    $file = $request->file($field);
+                    $filename = $field . '_' . $request->user()->id . '_' . time() . '.' . $file->getClientOriginalExtension();
+
+                    // Store to the documents directory within the default disk
+                    $path = $file->storeAs('documents', $filename);
+
+                    if ($path === false) {
+                        throw new \RuntimeException("Failed to store file for field: {$field}");
+                    }
+
+                    $document->{$field . '_path'} = $path;
+                    $filesUpdated = true;
+                }
             }
 
             if ($filesUpdated) {
@@ -72,12 +65,13 @@ class DocumentController extends Controller
             Log::error('Document upload failed', [
                 'user_id' => $request->user()->id,
                 'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
+                'file_class' => $e::class,
+                'default_disk' => config('filesystems.default'),
+                'storage_path' => storage_path('app'),
             ]);
 
             return response()->json([
-                'error' => 'Failed to upload document. Please try again later.',
-                'detail' => config('app.debug') ? $e->getMessage() : null,
+                'error' => 'Upload failed: ' . $e->getMessage(),
             ], 500);
         }
     }
