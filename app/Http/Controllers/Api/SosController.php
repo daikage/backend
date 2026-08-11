@@ -12,6 +12,13 @@ class SosController extends Controller
 {
     public function store(Request $request, Ride $ride)
     {
+        $user = $request->user();
+
+        // Only the ride's customer or assigned driver can raise an alert on it.
+        if ((int) $ride->customer_id !== (int) $user->id && (int) $ride->driver_id !== (int) $user->id) {
+            return response()->json(['error' => 'You are not part of this ride.'], 403);
+        }
+
         $request->validate([
             'lat' => 'required|numeric',
             'lng' => 'required|numeric',

@@ -11,14 +11,31 @@ use App\Events\MessageSent;
 
 class ChatController extends Controller
 {
-    public function index(Ride $ride)
+    /**
+     * Only the ride's customer and assigned driver may interact with its chat.
+     */
+    private function canAccess(Ride $ride, $user): bool
     {
+        return (int) $ride->customer_id === (int) $user->id
+            || (int) $ride->driver_id === (int) $user->id;
+    }
+
+    public function index(Request $request, Ride $ride)
+    {
+        if (! $this->canAccess($ride, $request->user())) {
+            return response()->json(['error' => 'You are not part of this ride.'], 403);
+        }
+
         $messages = $ride->messages()->with('sender')->orderBy('created_at', 'asc')->get();
         return response()->json(['messages' => $messages]);
     }
 
     public function store(Request $request, Ride $ride)
     {
+        if (! $this->canAccess($ride, $request->user())) {
+            return response()->json(['error' => 'You are not part of this ride.'], 403);
+        }
+
         $request->validate(['body' => 'required|string']);
 
         $message = $ride->messages()->create([

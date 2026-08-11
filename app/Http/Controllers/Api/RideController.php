@@ -99,14 +99,20 @@ class RideController extends Controller
             return response()->json(['error' => 'Only drivers can accept rides.'], 403);
         }
 
-        if ($ride->status !== 'pending') {
+        // Atomically claim the ride so two drivers can't accept the same request.
+        $claimed = Ride::where('id', $ride->id)
+            ->where('status', 'pending')
+            ->whereNull('driver_id')
+            ->update([
+                'driver_id' => $user->id,
+                'status' => 'accepted',
+            ]);
+
+        if (! $claimed) {
             return response()->json(['error' => 'Ride is no longer available'], 400);
         }
 
-        $ride->update([
-            'driver_id' => $user->id,
-            'status' => 'accepted'
-        ]);
+        $ride->refresh();
 
         broadcast(new RideStatusUpdated($ride))->toOthers();
 
