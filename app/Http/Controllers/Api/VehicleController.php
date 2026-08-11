@@ -25,27 +25,38 @@ class VehicleController extends Controller
             return response()->json(['error' => 'Only drivers can register vehicles.'], 403);
         }
 
-        $request->validate([
-            'make' => 'required|string|max:100',
-            'model' => 'required|string|max:100',
-            'year' => 'required|integer|min:1990|max:' . (date('Y') + 1),
-            'color' => 'required|string|max:50',
-            'plate_number' => 'required|string|max:20|unique:vehicles,plate_number',
-            'ride_category_id' => 'nullable|exists:ride_categories,id',
-        ]);
+        try {
+            $request->validate([
+                'make' => 'required|string|max:100',
+                'model' => 'required|string|max:100',
+                'year' => 'required|integer|min:1990|max:' . (date('Y') + 1),
+                'color' => 'required|string|max:50',
+                'plate_number' => 'required|string|max:20|unique:vehicles,plate_number',
+                'ride_category_id' => 'nullable|exists:ride_categories,id',
+            ]);
 
-        $vehicle = Vehicle::create([
-            'user_id' => $user->id,
-            'make' => $request->make,
-            'model' => $request->model,
-            'year' => $request->year,
-            'color' => $request->color,
-            'plate_number' => $request->plate_number,
-            'ride_category_id' => $request->ride_category_id,
-            'is_active' => true,
-        ]);
+            $vehicle = Vehicle::create([
+                'user_id' => $user->id,
+                'make' => $request->make,
+                'model' => $request->model,
+                'year' => $request->year,
+                'color' => $request->color,
+                'plate_number' => $request->plate_number,
+                'ride_category_id' => $request->ride_category_id,
+                'is_active' => true,
+            ]);
 
-        return response()->json(['vehicle' => $vehicle->load('rideCategory')], 201);
+            return response()->json(['vehicle' => $vehicle->load('rideCategory')], 201);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            $errors = $e->validator->errors()->all();
+            return response()->json([
+                'error' => 'Validation failed: ' . implode(', ', $errors)
+            ], 422);
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Vehicle creation failed: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     public function update(Request $request, Vehicle $vehicle)
