@@ -43,6 +43,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/driver/wallet', [\App\Http\Controllers\Api\EarningController::class, 'wallet']);
     Route::get('/driver/earnings', [\App\Http\Controllers\Api\EarningController::class, 'earnings']);
 
+    // Customer Wallet & Transactions
+    Route::get('/customer/wallet', [\App\Http\Controllers\Api\WalletController::class, 'wallet']);
+    Route::get('/customer/transactions', [\App\Http\Controllers\Api\WalletController::class, 'transactions']);
+
     // Chat
     Route::get('/rides/{ride}/messages', [\App\Http\Controllers\Api\ChatController::class, 'index']);
     Route::post('/rides/{ride}/messages', [\App\Http\Controllers\Api\ChatController::class, 'store']);
