@@ -43,37 +43,37 @@ class UserInfolist
                 TextEntry::make('updated_at')
                     ->dateTime()
                     ->placeholder('-'),
-            ])->columns(3),
-            \Filament\Infolists\Components\Section::make('Driver Documents')
-                ->schema([
-                    \Filament\Infolists\Components\ImageEntry::make('driverDocument.license_path')
-                        ->label('License')
-                        ->placeholder('Not uploaded'),
-                    \Filament\Infolists\Components\ImageEntry::make('driverDocument.insurance_path')
-                        ->label('Insurance')
-                        ->placeholder('Not uploaded'),
-                    \Filament\Infolists\Components\ImageEntry::make('driverDocument.vehicle_license_path')
-                        ->label('Vehicle License')
-                        ->placeholder('Not uploaded'),
-                    \Filament\Infolists\Components\ImageEntry::make('driverDocument.road_worthiness_path')
-                        ->label('Road Worthiness')
-                        ->placeholder('Not uploaded'),
-                    \Filament\Infolists\Components\ImageEntry::make('driverDocument.hackney_permit_path')
-                        ->label('Hackney Permit')
-                        ->placeholder('Not uploaded'),
-                    \Filament\Infolists\Components\TextEntry::make('driverDocument.status')
-                        ->label('Document Status')
-                        ->badge()
-                        ->color(fn (string $state): string => match ($state) {
-                            'pending' => 'warning',
-                            'approved' => 'success',
-                            'rejected' => 'danger',
-                            default => 'gray',
-                        })
-                        ->placeholder('No status'),
-                ])
-                ->columns(3)
-                ->visible(fn ($record) => $record?->role === 'driver' && $record?->driverDocument),
-        ]);
+
+                \Filament\Infolists\Components\Section::make('Driver Documents')
+                    ->schema([
+                        \Filament\Infolists\Components\ImageEntry::make('driverDocument.license_path')
+                            ->label('License')
+                            ->placeholder('Not uploaded'),
+                        \Filament\Infolists\Components\ImageEntry::make('driverDocument.insurance_path')
+                            ->label('Insurance')
+                            ->placeholder('Not uploaded'),
+                        \Filament\Infolists\Components\ImageEntry::make('driverDocument.vehicle_license_path')
+                            ->label('Vehicle License')
+                            ->placeholder('Not uploaded'),
+                        \Filament\Infolists\Components\ImageEntry::make('driverDocument.road_worthiness_path')
+                            ->label('Road Worthiness')
+                            ->placeholder('Not uploaded'),
+                        \Filament\Infolists\Components\ImageEntry::make('driverDocument.hackney_permit_path')
+                            ->label('Hackney Permit')
+                            ->placeholder('Not uploaded'),
+                        \Filament\Infolists\Components\TextEntry::make('driverDocument.status')
+                            ->label('Document Status')
+                            ->badge()
+                            ->color(fn (string $state): string => match ($state) {
+                                'pending' => 'warning',
+                                'approved' => 'success',
+                                'rejected' => 'danger',
+                                default => 'gray',
+                            })
+                            ->placeholder('No status'),
+                    ])
+                    ->columns(3)
+                    ->visible(fn ($record) => $record?->role === 'driver' && $record?->driverDocument),
+            ]);
     }
 }
