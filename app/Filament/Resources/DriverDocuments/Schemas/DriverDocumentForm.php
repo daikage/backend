@@ -2,16 +2,16 @@
 
 namespace App\Filament\Resources\DriverDocuments\Schemas;
 
-use Filament\Forms\Form;
+use Filament\Schemas\Schema;
 
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\FileUpload;
 
 class DriverDocumentForm
 {
-    public static function configure(Form $form): Form
+    public static function configure(Schema $schema): Schema
     {
-        return $form
+        return $schema
             ->components([
                 Select::make('user_id')
                     ->relationship('user', 'name')

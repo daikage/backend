@@ -3,13 +3,13 @@
 namespace App\Filament\Resources\Rides\Schemas;
 
 use Filament\Infolists\Components\TextEntry;
-use Filament\Infolists\Infolist;
+use Filament\Schemas\Schema;
 
 class RideInfolist
 {
-    public static function configure(Infolist $infolist): Infolist
+    public static function configure(Schema $schema): Schema
     {
-        return $infolist
+        return $schema
             ->components([
                 TextEntry::make('customer_id')
                     ->numeric(),

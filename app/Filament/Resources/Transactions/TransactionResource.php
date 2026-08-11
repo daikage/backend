@@ -12,8 +12,7 @@ use App\Filament\Resources\Transactions\Tables\TransactionsTable;
 use App\Models\Transaction;
 use BackedEnum;
 use Filament\Resources\Resource;
-use Filament\Forms\Form;
-use Filament\Infolists\Infolist;
+use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 
@@ -25,14 +24,14 @@ class TransactionResource extends Resource
 
     protected static ?string $recordTitleAttribute = 'transaction_reference';
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return TransactionForm::configure($form);
+        return TransactionForm::configure($schema);
     }
 
-    public static function infolist(Infolist $infolist): Infolist
+    public static function infolist(Schema $schema): Schema
     {
-        return TransactionInfolist::configure($infolist);
+        return TransactionInfolist::configure($schema);
     }
 
     public static function table(Table $table): Table

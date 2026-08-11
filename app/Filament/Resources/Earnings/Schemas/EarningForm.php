@@ -4,13 +4,13 @@ namespace App\Filament\Resources\Earnings\Schemas;
 
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
-use Filament\Forms\Form;
+use Filament\Schemas\Schema;
 
 class EarningForm
 {
-    public static function configure(Form $form): Form
+    public static function configure(Schema $schema): Schema
     {
-        return $form
+        return $schema
             ->components([
                 Select::make('driver_id')
                     ->relationship('driver', 'name')
