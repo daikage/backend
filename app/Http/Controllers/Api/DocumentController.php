@@ -37,13 +37,16 @@ class DocumentController extends Controller
             $filesUpdated = false;
             $fields = ['license', 'insurance', 'vehicle_license', 'road_worthiness', 'hackney_permit'];
 
+            // Use the system default disk, or fallback to 'public' so images are web-accessible
+            $disk = config('filesystems.default') === 'local' ? 'public' : config('filesystems.default');
+
             foreach ($fields as $field) {
                 if ($request->hasFile($field)) {
                     $file = $request->file($field);
                     $filename = $field . '_' . $request->user()->id . '_' . time() . '.' . $file->getClientOriginalExtension();
 
-                    // Store to the documents directory within the default disk
-                    $path = $file->storeAs('documents', $filename);
+                    // Store to the documents directory within the appropriate disk
+                    $path = $file->storeAs('documents', $filename, $disk);
 
                     if ($path === false) {
                         throw new \RuntimeException("Failed to store file for field: {$field}");

@@ -21,19 +21,14 @@ class DriverDocumentsTable
                     ->searchable()
                     ->sortable(),
                 ImageColumn::make('license_path')
-                    ->disk('public')
                     ->label('License'),
                 ImageColumn::make('insurance_path')
-                    ->disk('public')
                     ->label('Insurance'),
                 ImageColumn::make('vehicle_license_path')
-                    ->disk('public')
                     ->label('Vehicle License'),
                 ImageColumn::make('road_worthiness_path')
-                    ->disk('public')
                     ->label('Road Worthiness'),
                 ImageColumn::make('hackney_permit_path')
-                    ->disk('public')
                     ->label('Hackney Permit'),
                 TextColumn::make('status')
                     ->badge()
