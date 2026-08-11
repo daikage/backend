@@ -48,18 +48,23 @@ class UserInfolist
                     ->schema([
                         \Filament\Infolists\Components\ImageEntry::make('driverDocument.license_path')
                             ->label('License')
+                            ->disk(config('filesystems.default') === 'local' ? 'public' : config('filesystems.default'))
                             ->placeholder('Not uploaded'),
                         \Filament\Infolists\Components\ImageEntry::make('driverDocument.insurance_path')
                             ->label('Insurance')
+                            ->disk(config('filesystems.default') === 'local' ? 'public' : config('filesystems.default'))
                             ->placeholder('Not uploaded'),
                         \Filament\Infolists\Components\ImageEntry::make('driverDocument.vehicle_license_path')
                             ->label('Vehicle License')
+                            ->disk(config('filesystems.default') === 'local' ? 'public' : config('filesystems.default'))
                             ->placeholder('Not uploaded'),
                         \Filament\Infolists\Components\ImageEntry::make('driverDocument.road_worthiness_path')
                             ->label('Road Worthiness')
+                            ->disk(config('filesystems.default') === 'local' ? 'public' : config('filesystems.default'))
                             ->placeholder('Not uploaded'),
                         \Filament\Infolists\Components\ImageEntry::make('driverDocument.hackney_permit_path')
                             ->label('Hackney Permit')
+                            ->disk(config('filesystems.default') === 'local' ? 'public' : config('filesystems.default'))
                             ->placeholder('Not uploaded'),
                         \Filament\Infolists\Components\TextEntry::make('driverDocument.status')
                             ->label('Document Status')

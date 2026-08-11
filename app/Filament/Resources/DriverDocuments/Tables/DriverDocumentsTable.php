@@ -21,14 +21,19 @@ class DriverDocumentsTable
                     ->searchable()
                     ->sortable(),
                 ImageColumn::make('license_path')
+                    ->disk(config('filesystems.default') === 'local' ? 'public' : config('filesystems.default'))
                     ->label('License'),
                 ImageColumn::make('insurance_path')
+                    ->disk(config('filesystems.default') === 'local' ? 'public' : config('filesystems.default'))
                     ->label('Insurance'),
                 ImageColumn::make('vehicle_license_path')
+                    ->disk(config('filesystems.default') === 'local' ? 'public' : config('filesystems.default'))
                     ->label('Vehicle License'),
                 ImageColumn::make('road_worthiness_path')
+                    ->disk(config('filesystems.default') === 'local' ? 'public' : config('filesystems.default'))
                     ->label('Road Worthiness'),
                 ImageColumn::make('hackney_permit_path')
+                    ->disk(config('filesystems.default') === 'local' ? 'public' : config('filesystems.default'))
                     ->label('Hackney Permit'),
                 TextColumn::make('status')
                     ->badge()
