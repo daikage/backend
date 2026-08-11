@@ -3,13 +3,13 @@
 namespace App\Filament\Resources\Transactions\Schemas;
 
 use Filament\Infolists\Components\TextEntry;
-use Filament\Schemas\Schema;
+use Filament\Infolists\Infolist;
 
 class TransactionInfolist
 {
-    public static function configure(Schema $schema): Schema
+    public static function configure(Infolist $infolist): Infolist
     {
-        return $schema
+        return $infolist
             ->components([
                 TextEntry::make('ride_id')
                     ->numeric(),

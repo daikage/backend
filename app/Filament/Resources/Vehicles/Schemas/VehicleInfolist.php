@@ -4,13 +4,13 @@ namespace App\Filament\Resources\Vehicles\Schemas;
 
 use Filament\Infolists\Components\IconEntry;
 use Filament\Infolists\Components\TextEntry;
-use Filament\Schemas\Schema;
+use Filament\Infolists\Infolist;
 
 class VehicleInfolist
 {
-    public static function configure(Schema $schema): Schema
+    public static function configure(Infolist $infolist): Infolist
     {
-        return $schema
+        return $infolist
             ->components([
                 TextEntry::make('user_id')
                     ->numeric(),

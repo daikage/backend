@@ -10,7 +10,8 @@ use App\Filament\Resources\DriverDocuments\Tables\DriverDocumentsTable;
 use App\Models\DriverDocument;
 use BackedEnum;
 use Filament\Resources\Resource;
-use Filament\Schemas\Schema;
+use Filament\Forms\Form;
+use Filament\Infolists\Infolist;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 
@@ -20,9 +21,9 @@ class DriverDocumentResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
 
-    public static function form(Schema $schema): Schema
+    public static function form(Form $form): Form
     {
-        return DriverDocumentForm::configure($schema);
+        return DriverDocumentForm::configure($form);
     }
 
     public static function table(Table $table): Table

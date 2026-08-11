@@ -11,6 +11,18 @@ class RideTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+        
+        \App\Models\RideCategory::create([
+            'name' => 'Economy',
+            'service_type' => 'single',
+            'base_fare' => 1000,
+            'per_km_rate' => 100,
+        ]);
+    }
+
     private function customer(): User
     {
         return User::factory()->customer()->create();
@@ -55,11 +67,11 @@ class RideTest extends TestCase
         $customer = $this->customer();
 
         $this->actingAs($customer, 'sanctum')
-            ->postJson('/api/rides/request', $this->ridePayload())
+            ->postJson('/api/rides', $this->ridePayload())
             ->assertOk()
             ->assertJsonPath('ride.status', 'pending')
             ->assertJsonPath('ride.customer_id', $customer->id)
-            ->assertJsonPath('ride.estimated_fare', 3900);
+            ->assertJsonPath('ride.estimated_fare', 2200);
     }
 
     public function test_driver_cannot_request_a_ride(): void
@@ -67,7 +79,7 @@ class RideTest extends TestCase
         $driver = $this->driver();
 
         $this->actingAs($driver, 'sanctum')
-            ->postJson('/api/rides/request', $this->ridePayload())
+            ->postJson('/api/rides', $this->ridePayload())
             ->assertForbidden();
     }
 

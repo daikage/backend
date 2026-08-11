@@ -10,7 +10,8 @@ use App\Filament\Resources\RideCategories\Tables\RideCategoriesTable;
 use App\Models\RideCategory;
 use BackedEnum;
 use Filament\Resources\Resource;
-use Filament\Schemas\Schema;
+use Filament\Forms\Form;
+use Filament\Infolists\Infolist;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 
@@ -20,9 +21,9 @@ class RideCategoryResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
 
-    public static function form(Schema $schema): Schema
+    public static function form(Form $form): Form
     {
-        return RideCategoryForm::configure($schema);
+        return RideCategoryForm::configure($form);
     }
 
     public static function table(Table $table): Table

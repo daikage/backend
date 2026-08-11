@@ -69,6 +69,13 @@ class AuthTest extends TestCase
     public function test_driver_can_toggle_availability(): void
     {
         $driver = User::factory()->driver()->create(['is_online' => false]);
+        \App\Models\DriverDocument::create([
+            'user_id' => $driver->id,
+            'status' => 'approved',
+            'type' => 'license',
+            'front_image' => 'front.jpg',
+            'back_image' => 'back.jpg'
+        ]);
 
         $this->actingAs($driver, 'sanctum')
             ->postJson('/api/driver/availability')

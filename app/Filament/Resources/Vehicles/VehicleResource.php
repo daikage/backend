@@ -12,7 +12,8 @@ use App\Filament\Resources\Vehicles\Tables\VehiclesTable;
 use App\Models\Vehicle;
 use BackedEnum;
 use Filament\Resources\Resource;
-use Filament\Schemas\Schema;
+use Filament\Forms\Form;
+use Filament\Infolists\Infolist;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 
@@ -24,14 +25,14 @@ class VehicleResource extends Resource
 
     protected static ?string $recordTitleAttribute = 'license_plate';
 
-    public static function form(Schema $schema): Schema
+    public static function form(Form $form): Form
     {
-        return VehicleForm::configure($schema);
+        return VehicleForm::configure($form);
     }
 
-    public static function infolist(Schema $schema): Schema
+    public static function infolist(Infolist $infolist): Infolist
     {
-        return VehicleInfolist::configure($schema);
+        return VehicleInfolist::configure($infolist);
     }
 
     public static function table(Table $table): Table

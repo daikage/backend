@@ -12,7 +12,8 @@ use App\Filament\Resources\Rides\Tables\RidesTable;
 use App\Models\Ride;
 use BackedEnum;
 use Filament\Resources\Resource;
-use Filament\Schemas\Schema;
+use Filament\Forms\Form;
+use Filament\Infolists\Infolist;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 
@@ -24,14 +25,14 @@ class RideResource extends Resource
 
     protected static ?string $recordTitleAttribute = 'id';
 
-    public static function form(Schema $schema): Schema
+    public static function form(Form $form): Form
     {
-        return RideForm::configure($schema);
+        return RideForm::configure($form);
     }
 
-    public static function infolist(Schema $schema): Schema
+    public static function infolist(Infolist $infolist): Infolist
     {
-        return RideInfolist::configure($schema);
+        return RideInfolist::configure($infolist);
     }
 
     public static function table(Table $table): Table
