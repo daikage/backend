@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use App\Events\RideRequested;
 use App\Events\RideStatusUpdated;
 use App\Events\DriverLocationUpdated;
+use App\Events\CustomerLocationUpdated;
 use App\Jobs\SendRideReceipt;
 
 class RideController extends Controller
@@ -188,6 +189,34 @@ class RideController extends Controller
         ]);
 
         broadcast(new DriverLocationUpdated($ride->id, $request->lat, $request->lng, $request->heading))->toOthers();
+
+        return response()->json(['success' => true]);
+    }
+
+    /**
+     * Update the customer's live location for an active ride so the assigned
+     * driver can see them moving on the map.
+     */
+    public function updateCustomerLocation(Request $request, Ride $ride)
+    {
+        $user = $request->user();
+
+        if ($ride->customer_id !== $user->id) {
+            return response()->json(['error' => 'Only the customer of this ride can update their location.'], 403);
+        }
+
+        $request->validate([
+            'lat' => 'required|numeric',
+            'lng' => 'required|numeric',
+        ]);
+
+        // Persist so polling fallbacks get fresh coordinates too.
+        $user->update([
+            'last_lat' => $request->lat,
+            'last_lng' => $request->lng,
+        ]);
+
+        broadcast(new CustomerLocationUpdated($ride->id, $request->lat, $request->lng))->toOthers();
 
         return response()->json(['success' => true]);
     }

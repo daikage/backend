@@ -33,6 +33,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/rides/{ride}/cancel', [\App\Http\Controllers\Api\RideController::class, 'cancelRide']);
     Route::post('/rides/{ride}/status', [\App\Http\Controllers\Api\RideController::class, 'updateStatus']);
     Route::post('/rides/{ride}/location', [\App\Http\Controllers\Api\RideController::class, 'updateLocation']);
+    Route::post('/rides/{ride}/customer-location', [\App\Http\Controllers\Api\RideController::class, 'updateCustomerLocation']);
     Route::post('/rides/{ride}/rate', [\App\Http\Controllers\Api\RatingController::class, 'rate']);
     Route::get('/rides/{ride}', [\App\Http\Controllers\Api\RideController::class, 'show']);
 
