@@ -153,6 +153,11 @@ class PaymentController extends Controller
         // Verify signature
         $signature = $request->header('x-paystack-signature');
         $secret = config('services.paystack.secret_key');
+        
+        if (empty($secret)) {
+            return response()->json(['error' => 'Webhook secret not configured'], 500);
+        }
+
         $computedSignature = hash_hmac('sha512', $request->getContent(), $secret);
 
         if ($signature !== $computedSignature) {
