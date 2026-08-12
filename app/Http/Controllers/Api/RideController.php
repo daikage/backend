@@ -32,6 +32,7 @@ class RideController extends Controller
         $request->validate([
             'ride_category_id' => 'nullable|exists:ride_categories,id',
             'service_type' => 'nullable|in:single,interstate,haulage,dispatch',
+            'payment_method' => 'nullable|in:cash,wallet',
             'pickup_lat' => 'required|numeric',
             'pickup_lng' => 'required|numeric',
             'pickup_address' => 'required|string',
@@ -55,6 +56,7 @@ class RideController extends Controller
         ]);
 
         $serviceType = $request->service_type ?? 'single';
+        $paymentMethod = $request->payment_method ?? 'cash';
 
         $category = null;
         if ($request->ride_category_id) {
@@ -70,6 +72,13 @@ class RideController extends Controller
         $multiplier = Ride::fareMultiplier($serviceType);
         $fare = $baseFare * $multiplier;
 
+        if ($paymentMethod === 'wallet') {
+            $wallet = Wallet::firstOrCreate(['user_id' => $user->id]);
+            if ($wallet->balance < $fare) {
+                return response()->json(['error' => 'Insufficient wallet balance. Please top up your wallet.'], 400);
+            }
+        }
+
         $ride = Ride::create([
             'customer_id' => $user->id,
             'ride_category_id' => $category->id,
@@ -84,6 +93,7 @@ class RideController extends Controller
             'dropoff_lng' => $request->dropoff_lng,
             'distance' => $request->distance_km,
             'estimated_fare' => $fare,
+            'payment_method' => $paymentMethod,
             'status' => 'pending',
         ]);
 
@@ -149,6 +159,22 @@ class RideController extends Controller
             $fare = $ride->actual_fare ?? $ride->estimated_fare;
             $commission = $fare * ($ride->platform_commission ?? 0.20);
             $driverEarning = $fare - $commission;
+
+            // Handle Customer Wallet Deduction if paid via wallet
+            if ($ride->payment_method === 'wallet') {
+                $customerWallet = Wallet::firstOrCreate(['user_id' => $ride->customer_id]);
+                $customerWallet->decrement('balance', $fare);
+
+                \App\Models\Transaction::create([
+                    'user_id' => $ride->customer_id,
+                    'ride_id' => $ride->id,
+                    'amount' => -$fare,
+                    'type' => 'ride_payment',
+                    'payment_method' => 'wallet',
+                    'payment_status' => 'completed',
+                    'transaction_reference' => uniqid('ride_pay_'),
+                ]);
+            }
 
             Earning::create([
                 'driver_id' => $ride->driver_id,

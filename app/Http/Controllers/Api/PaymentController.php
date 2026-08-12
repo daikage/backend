@@ -81,6 +81,31 @@ class PaymentController extends Controller
         return response()->json(['error' => 'Could not initialize Flutterwave'], 500);
     }
 
+    public function topup(Request $request)
+    {
+        $request->validate([
+            'amount' => 'required|numeric|min:100',
+            'gateway' => 'required|in:paystack,flutterwave'
+        ]);
+
+        $user = $request->user();
+        $reference = uniqid('topup_');
+
+        $transaction = Transaction::create([
+            'user_id' => $user->id,
+            'amount' => $request->amount,
+            'payment_method' => $request->gateway,
+            'transaction_reference' => $reference,
+            'type' => 'topup',
+        ]);
+
+        if ($request->gateway === 'paystack') {
+            return $this->initializePaystack($user, $request->amount, $reference);
+        } else {
+            return $this->initializeFlutterwave($user, $request->amount, $reference);
+        }
+    }
+
     public function verify(Request $request, $gateway)
     {
         $reference = $request->reference;
@@ -112,6 +137,7 @@ class PaymentController extends Controller
 
         if ($isSuccessful) {
             $transaction->update(['payment_status' => 'completed']);
+            $this->processCompletedTransaction($transaction);
             return response()->json(['message' => 'Payment successful', 'transaction' => $transaction]);
         }
 
@@ -146,6 +172,7 @@ class PaymentController extends Controller
         $transaction = Transaction::where('transaction_reference', $reference)->first();
         if ($transaction && $transaction->payment_status !== 'completed') {
             $transaction->update(['payment_status' => 'completed']);
+            $this->processCompletedTransaction($transaction);
         }
 
         return response()->json(['message' => 'Webhook processed']);
@@ -175,8 +202,20 @@ class PaymentController extends Controller
         $transaction = Transaction::where('transaction_reference', $reference)->first();
         if ($transaction && $transaction->payment_status !== 'completed' && $status === 'successful') {
             $transaction->update(['payment_status' => 'completed']);
+            $this->processCompletedTransaction($transaction);
         }
 
         return response()->json(['message' => 'Webhook processed']);
+    }
+
+    /**
+     * Process side effects for a successfully completed transaction.
+     */
+    private function processCompletedTransaction($transaction)
+    {
+        if ($transaction->type === 'topup') {
+            $wallet = \App\Models\Wallet::firstOrCreate(['user_id' => $transaction->user_id]);
+            $wallet->increment('balance', $transaction->amount);
+        }
     }
 }

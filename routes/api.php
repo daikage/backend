@@ -21,6 +21,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Payments
     Route::post('/payment/initialize', [\App\Http\Controllers\Api\PaymentController::class, 'initialize']);
+    Route::post('/payment/topup', [\App\Http\Controllers\Api\PaymentController::class, 'topup']);
     Route::post('/payment/verify/{gateway}', [\App\Http\Controllers\Api\PaymentController::class, 'verify']);
 
     // Rides — static paths MUST come before the {ride} wildcard
