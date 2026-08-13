@@ -22,7 +22,6 @@ Route::middleware('auth:sanctum')->group(function () {
     // Payments
     Route::post('/payment/initialize', [\App\Http\Controllers\Api\PaymentController::class, 'initialize']);
     Route::post('/payment/topup', [\App\Http\Controllers\Api\PaymentController::class, 'topup']);
-    Route::match(['get', 'post'], '/payment/verify/{gateway}', [\App\Http\Controllers\Api\PaymentController::class, 'verify']);
 
     // Rides — static paths MUST come before the {ride} wildcard
     Route::get('/rides/active', [\App\Http\Controllers\Api\RideController::class, 'active']);
@@ -77,3 +76,8 @@ Route::get('/ride-categories', [\App\Http\Controllers\Api\RideCategoryController
 // Payment Gateway Webhooks (no auth — validated by signature)
 Route::post('/webhooks/paystack', [\App\Http\Controllers\Api\PaymentController::class, 'paystackWebhook']);
 Route::post('/webhooks/flutterwave', [\App\Http\Controllers\Api\PaymentController::class, 'flutterwaveWebhook']);
+
+// Payment verification callback (public — Paystack redirects the customer's browser here
+// after payment with no Bearer token, so it must NOT require auth). The verify() method
+// only looks up the transaction by reference and confirms it with the gateway API.
+Route::match(['get', 'post'], '/payment/verify/{gateway}', [\App\Http\Controllers\Api\PaymentController::class, 'verify']);
