@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\DB;
 use App\Models\Transaction;
 use App\Models\Ride;
 
@@ -25,6 +26,7 @@ class PaymentController extends Controller
             'ride_id' => $request->ride_id,
             'user_id' => $user->id,
             'amount' => $request->amount,
+            'type' => 'ride_payment',
             'payment_method' => $request->gateway,
             'transaction_reference' => $reference,
         ]);
@@ -218,9 +220,17 @@ class PaymentController extends Controller
      */
     private function processCompletedTransaction($transaction)
     {
-        if ($transaction->type === 'topup') {
+        // Only wallet top-ups have a monetary side-effect. Protecting the wallet
+        // increment with a DB transaction + row lock prevents double-crediting if
+        // the webhook and the verify callback fire for the same reference.
+        DB::transaction(function () use ($transaction) {
+            if ($transaction->type !== 'topup') {
+                return;
+            }
+
             $wallet = \App\Models\Wallet::firstOrCreate(['user_id' => $transaction->user_id]);
+            $wallet = \App\Models\Wallet::whereKey($wallet->id)->lockForUpdate()->first() ?? $wallet;
             $wallet->increment('balance', $transaction->amount);
-        }
+        });
     }
 }

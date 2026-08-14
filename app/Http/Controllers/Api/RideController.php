@@ -8,6 +8,7 @@ use App\Models\RideCategory;
 use App\Models\Earning;
 use App\Models\Wallet;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use App\Events\RideRequested;
 use App\Events\RideStatusUpdated;
 use App\Events\DriverLocationUpdated;
@@ -73,8 +74,14 @@ class RideController extends Controller
         $fare = $baseFare * $multiplier;
 
         if ($paymentMethod === 'wallet') {
-            $wallet = Wallet::firstOrCreate(['user_id' => $user->id]);
-            if ($wallet->balance < $fare) {
+            // Lock the wallet row inside a transaction so two concurrent ride
+            // requests can't both pass the balance check against the same funds.
+            $wallet = DB::transaction(function () use ($user) {
+                $wallet = Wallet::firstOrCreate(['user_id' => $user->id]);
+                return Wallet::whereKey($wallet->id)->lockForUpdate()->first() ?? $wallet;
+            });
+
+            if ((float) $wallet->balance < $fare) {
                 return response()->json(['error' => 'Insufficient wallet balance. Please top up your wallet.'], 400);
             }
         }
@@ -139,7 +146,11 @@ class RideController extends Controller
         }
 
         $request->validate([
-            'status' => 'required|in:arrived,started,completed,cancelled'
+            'status' => 'required|in:arrived,started,completed,cancelled',
+            // Optional actual figures captured at drop-off. When provided these
+            // are used for the real payout/payment instead of the estimate.
+            'actual_fare' => 'numeric|min:0',
+            'actual_distance' => 'numeric|min:0',
         ]);
 
         $data = ['status' => $request->status];
@@ -152,17 +163,40 @@ class RideController extends Controller
             $data['completed_at'] = now();
         }
 
-        $ride->update($data);
+        if ($request->status === 'completed' && $request->filled('actual_fare')) {
+            $data['actual_fare'] = (float) $request->actual_fare;
+        }
+        if ($request->status === 'completed' && $request->filled('actual_distance')) {
+            $data['distance'] = (float) $request->actual_distance;
+        }
 
-        if ($request->status === 'completed') {
-            // Process earnings
-            $fare = $ride->actual_fare ?? $ride->estimated_fare;
-            $commission = $fare * ($ride->platform_commission ?? 0.20);
-            $driverEarning = $fare - $commission;
+        // Run the state change and all financial side-effects in a single DB
+        // transaction with row locks, so concurrent requests can never
+        // double-spend a customer wallet or double-credit a driver wallet.
+        DB::transaction(function () use ($ride, $data) {
+            // Lock the ride row so the completion side-effects run atomically.
+            Ride::whereKey($ride->id)->lockForUpdate()->first();
 
-            // Handle Customer Wallet Deduction if paid via wallet
+            $ride->update($data);
+
+            if ($data['status'] !== 'completed') {
+                return;
+            }
+
+            $fare = (float) ($data['actual_fare'] ?? $ride->actual_fare ?? $ride->estimated_fare);
+            $commission = round($fare * ($ride->platform_commission ?? 0.20), 2);
+            $driverEarning = round($fare - $commission, 2);
+
+            // 1) Customer wallet deduction (only when paid via wallet).
             if ($ride->payment_method === 'wallet') {
                 $customerWallet = Wallet::firstOrCreate(['user_id' => $ride->customer_id]);
+                $customerWallet = Wallet::whereKey($customerWallet->id)->lockForUpdate()->first() ?? $customerWallet;
+
+                if ((float) $customerWallet->balance < $fare) {
+                    // Roll the whole completion back — the ride stays "started".
+                    throw new \RuntimeException('Insufficient wallet balance to complete the ride.');
+                }
+
                 $customerWallet->decrement('balance', $fare);
 
                 \App\Models\Transaction::create([
@@ -176,6 +210,7 @@ class RideController extends Controller
                 ]);
             }
 
+            // 2) Driver earnings + wallet credit.
             Earning::create([
                 'driver_id' => $ride->driver_id,
                 'ride_id' => $ride->id,
@@ -183,12 +218,16 @@ class RideController extends Controller
                 'commission_deducted' => $commission,
             ]);
 
-            $wallet = Wallet::firstOrCreate(['user_id' => $ride->driver_id]);
-            $wallet->increment('balance', $driverEarning);
-            
-            SendRideReceipt::dispatch($ride);
+            $driverWallet = Wallet::firstOrCreate(['user_id' => $ride->driver_id]);
+            $driverWallet = Wallet::whereKey($driverWallet->id)->lockForUpdate()->first() ?? $driverWallet;
+            $driverWallet->increment('balance', $driverEarning);
+        });
+
+        if ($request->status === 'completed') {
+            SendRideReceipt::dispatch($ride->refresh());
         }
 
+        $ride->refresh();
         broadcast(new RideStatusUpdated($ride))->toOthers();
 
         return response()->json(['ride' => $ride->load('rideCategory')]);
