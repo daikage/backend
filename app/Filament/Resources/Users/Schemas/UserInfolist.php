@@ -56,7 +56,7 @@ class UserInfolist
                         self::documentEntry('driverDocument.vehicle_license_path', 'Vehicle License'),
                         self::documentEntry('driverDocument.road_worthiness_path', 'Road Worthiness'),
                         self::documentEntry('driverDocument.hackney_permit_path', 'Hackney Permit'),
-                        \Filament\Infolists\Components\TextEntry::make('driverDocument.status')
+                        TextEntry::make('driverDocument.status')
                             ->label('Document Status')
                             ->badge()
                             ->color(fn (?string $state): string => match ($state) {
